@@ -1,0 +1,80 @@
+// const mongoose = require('mongoose')
+
+// const movieSchema = new mongoose.Schema(
+// 	{
+// 		name: {
+// 			type: String,
+// 			required: [true, 'Please add a movie name'],
+// 			trim: true
+// 		},
+// 		length: {
+// 			type: Number,
+// 			required: [true, 'Please add a movie length']
+// 		},
+// 		img: {
+// 			type: String,
+// 			required: [true, 'Please add a movie img'],
+// 			trim: true
+// 		}
+// 	},
+// 	{ timestamps: true }
+// )
+
+// movieSchema.pre('deleteOne', { document: true, query: true }, async function (next) {
+// 	const movieId = this._id
+// 	const showtimes = await this.model('Showtime').find({ movie: movieId })
+
+// 	for (const showtime of showtimes) {
+// 		await showtime.deleteOne()
+// 	}
+// 	next()
+// })
+
+// module.exports = mongoose.model('Movie', movieSchema)
+
+const mongoose = require('mongoose');
+
+const movieSchema = new mongoose.Schema(
+    {
+        name: {
+            type: String,
+            required: [true, 'Please add a movie name'],
+            trim: true
+        },
+        length: {
+            type: Number,
+            required: [true, 'Please add a movie length']
+        },
+        img: {
+            type: String,
+            required: [true, 'Please add a movie img'],
+            trim: true
+        },
+        trailer: {
+            type: String,
+            required: [true, 'Please add a movie trailer'],
+            trim: true,
+            set: (value) => {
+                if (!value) return '';
+
+                // Extract `src` from an iframe tag
+                const match = value.match(/src=["']([^"']+)["']/);
+                return match ? match[1] : value; // Store only the URL
+            }
+        }
+    },
+    { timestamps: true }
+);
+
+// Middleware to delete related showtimes before deleting a movie
+movieSchema.pre('deleteOne', { document: true, query: true }, async function (next) {
+    const movieId = this._id;
+    const showtimes = await this.model('Showtime').find({ movie: movieId });
+
+    for (const showtime of showtimes) {
+        await showtime.deleteOne();
+    }
+    next();
+});
+
+module.exports = mongoose.model('Movie', movieSchema);
